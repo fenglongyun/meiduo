@@ -2,6 +2,9 @@ from rest_framework import serializers
 from django_redis import get_redis_connection
 from .models import User
 import re
+from celery_tasks.email.tasks import sendemail
+from itsdangerous import TimedJSONWebSignatureSerializer as TJWSSerializer
+from django.conf import settings
 
 
 class CreateUserSerializer(serializers.ModelSerializer):
@@ -76,6 +79,43 @@ class CreateUserSerializer(serializers.ModelSerializer):
         return user
 
 
+class UserDetailSerializer(serializers.ModelSerializer):
+    """ 用户详情序列化器 """
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'mobile', 'email', 'email_active']
+
+
+class EmailSerializer(serializers.ModelSerializer):
+    """ 更新邮箱序列化器 """
+    class Meta:
+        model = User
+        fields = ['id', 'email']
+        extra_kwargs = {
+            'email':{
+                'required':True
+            }
+        }
+
+    def update(self, instance, validated_data):
+        #获取前端发送过来的emil账号，并保存到数据库
+        instance.email=validated_data.get('email')
+        instance.save()
+        verify_email_url = self.generate_email_verify_url(instance)
+        #异步发送邮件，激活邮箱
+        sendemail.delay(instance.email,verify_email_url)
+        
+        return instance
 
 
 
+    def generate_email_verify_url(self,instance):
+        """ 自定义一个序列化器方法，用于生成邮箱验证url """
+        #创建加密序列化器
+        serializer = TJWSSerializer(settings.SECRET_KEY, 3600*24)
+
+        data = {'id':instance.id, 'email':instance.email}
+        #dumps() 加密后是bytes类型，所以decode()需要解码成字符串
+        token=serializer.dumps(data).decode()
+        return 'http://www.meiduo.site:8080/success_verify_email.html?token=' + token
