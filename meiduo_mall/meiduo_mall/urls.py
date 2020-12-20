@@ -21,4 +21,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     url(r'^', include('verifications.urls')),#发短信模块
     url(r'^', include('users.urls')),#用户模块
+    url(r'^', include('areas.urls')),#行政区模块
 ]

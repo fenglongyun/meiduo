@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 
 from pathlib import Path
 import os
+import datetime
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = os.path.dirname(Path(__file__).resolve().parent.parent)
@@ -41,9 +42,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     'rest_framework',   # 添加rest_framework
     'corsheaders',
-    'users.apps.UsersConfig'
+
+    'users.apps.UsersConfig',
+    'areas.apps.AreasConfig',
     
 
 ]
@@ -61,13 +65,16 @@ MIDDLEWARE = [
 ]
 
 # CORS白名单
-
 CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:8080',
     'http://localhost:8080',
     'http://www.meiduo.site:8080',
     'http://api.meiduo.site:8000',
 ]
+
+# 指明在跨域访问中，后端是否支持对cookie的操作
+CORS_ALLOW_CREDENTIALS = True
+
 
 ROOT_URLCONF = 'meiduo_mall.urls'
 
@@ -105,7 +112,7 @@ DATABASES = {
 }
 
 
-# 配置redis
+# 配置缓存后端使用redis
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -230,9 +237,60 @@ LOGGING = {
 
 
 REST_FRAMEWORK = {
-    'EXCEPTION_HANDLER': 'meiduo_mall.utils.exceptions.custom_exception_handler'
+    #自定义异常捕获
+    'EXCEPTION_HANDLER': 'meiduo_mall.utils.exceptions.custom_exception_handler',
+    
+    #权限类
+    # 'DEFAULT_PERMISSION_CLASSES': (
+    #     'rest_framework.permissions.IsAuthenticated',
+    # ),
+    #认证类
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ),
 }
 
 # 修改Django认证系统的用户模型类
 #在导包路径sys.path列表中追加一个到apps文件夹的路径
 AUTH_USER_MODEL='users.User'
+
+
+
+#JWTsettings
+JWT_AUTH = {
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=1),
+    'JWT_SECRET_KEY': SECRET_KEY,
+    'JWT_RESPONSE_PAYLOAD_HANDLER':'users.utils.jwt_response_payload_handler',
+}
+
+
+#修改Django用户认证后端
+AUTHENTICATION_BACKENDS = ['users.utils.UsernameMobileAuthBackend']
+
+
+
+#发送邮件客户端配置
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+# Host for sending email.
+EMAIL_HOST = 'smtp.163.com'
+
+# Port for sending email.
+EMAIL_PORT = 25
+
+# Optional SMTP authentication information for EMAIL_HOST.
+EMAIL_HOST_USER = 'fenglongyun2020@163.com'
+EMAIL_HOST_PASSWORD = 'PQUERLXGUGVHCTVS'
+EMAIL_FROM = 'fly<fenglongyun2020@163.com>'
+
+
+
+REST_FRAMEWORK_EXTENSIONS = {
+    #缓存时间
+    'DEFAULT_CACHE_RESPONSE_TIMEOUT': 60*60,
+    #缓存存储位置
+    'DEFAULT_USER_CACHE': 'default',
+    
+}

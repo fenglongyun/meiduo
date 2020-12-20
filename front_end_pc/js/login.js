@@ -11,7 +11,7 @@ var vm = new Vue({
     },
     methods: {
         // 获取url路径参数
-        get_query_string: function(name){
+        get_query_string: function(name) {
             var reg = new RegExp('(^|&)' + name + '=([^&]*)(&|$)', 'i');
             var r = window.location.search.substr(1).match(reg);
             if (r != null) {
@@ -20,14 +20,14 @@ var vm = new Vue({
             return null;
         },
         // 检查数据
-        check_username: function(){
+        check_username: function() {
             if (!this.username) {
                 this.error_username = true;
             } else {
                 this.error_username = false;
             }
         },
-        check_pwd: function(){
+        check_pwd: function() {
             if (!this.password) {
                 this.error_pwd_message = '请填写密码';
                 this.error_pwd = true;
@@ -36,12 +36,12 @@ var vm = new Vue({
             }
         },
         // 表单提交
-        on_submit: function(){
+        on_submit: function() {
             this.check_username();
             this.check_pwd();
 
             if (this.error_username == false && this.error_pwd == false) {
-                axios.post(this.host+'/authorizations/', {
+                axios.post(this.host + '/authorizations/', {
                         username: this.username,
                         password: this.password
                     }, {
@@ -82,7 +82,7 @@ var vm = new Vue({
             }
         },
         // qq登录
-        qq_login: function(){
+        qq_login: function() {
             var next = this.get_query_string('next') || '/';
             axios.get(this.host + '/oauth/qq/authorization/?next=' + next, {
                     responseType: 'json',
@@ -97,7 +97,7 @@ var vm = new Vue({
         },
 
         // 微博登录
-        weibo_login: function(){
+        weibo_login: function() {
             var next = this.get_query_string('next') || '/';
             axios.get(this.host + '/oauth/weibo/authorization/?next=' + next, {
                     responseType: 'json',
